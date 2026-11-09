@@ -1,0 +1,135 @@
+version: 2
+models:
+- name: stg_transactions
+  description: "Транзакции после приведения типов и очистки строк. Добавлены ключи, дата, час и сегмент суммы."
+  columns:
+  - name: transaction_id
+    description: "MD5 полей транзакции. Дубликаты проверяются тестом unique."
+    data_tests:
+    - not_null
+    - unique
+  - name: customer_id
+    description: "MD5 имени, фамилии, пола и координат. Исходного ID клиента нет, возможны совпадения."
+    data_tests:
+    - not_null
+  - name: transaction_time
+    description: Время транзакции без исходного часового пояса; обрабатывается как UTC без сдвига.
+    data_tests:
+    - not_null
+  - name: transaction_date
+    description: Календарная дата исходного timestamp, трактуемого как UTC.
+    data_tests:
+    - not_null
+  - name: day_of_week
+    description: 'ISO-день недели: понедельник=1, воскресенье=7; макрос dbt_date.'
+    data_tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_be_between:
+        arguments:
+          min_value: 1
+          max_value: 7
+  - name: transaction_hour
+    description: "Час исходного timestamp: 0-23, без пересчёта в часовой пояс штата."
+    data_tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_be_between:
+        arguments:
+          min_value: 0
+          max_value: 23
+  - name: merchant
+    description: Мерчант без пробелов по краям; регистр сохранён.
+    data_tests:
+    - not_null
+  - name: category
+    description: Категория в нижнем регистре без пробелов по краям.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - entertainment
+          - food_dining
+          - gas_transport
+          - grocery_net
+          - grocery_pos
+          - health_fitness
+          - home
+          - kids_pets
+          - misc_net
+          - misc_pos
+          - personal_care
+          - shopping_net
+          - shopping_pos
+          - travel
+  - name: amount
+    description: Сумма USD, Decimal(18,2); преобразование через строку сохраняет центы Float64.
+    data_tests:
+    - not_null
+  - name: amount_bucket
+    description: 'SMALL: <100 USD; MEDIUM: [100,1000); LARGE: >=1000. Пороги задаются vars.'
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - SMALL
+          - MEDIUM
+          - LARGE
+  - name: gender
+    description: Пол M/F, верхний регистр.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - M
+          - F
+  - name: us_state
+    description: Код штата/округа в верхнем регистре. Справочник включает 50 штатов и DC.
+    data_tests:
+    - not_null
+    - relationships:
+        arguments:
+          to: ref('states')
+          field: us_state
+  - name: latitude
+    description: Широта клиента, [-90,90].
+    data_tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_be_between:
+        arguments:
+          min_value: -90
+          max_value: 90
+  - name: longitude
+    description: Долгота клиента, [-180,180].
+    data_tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_be_between:
+        arguments:
+          min_value: -180
+          max_value: 180
+  - name: merchant_latitude
+    description: Широта мерчанта, [-90,90].
+    data_tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_be_between:
+        arguments:
+          min_value: -90
+          max_value: 90
+  - name: merchant_longitude
+    description: Долгота мерчанта, [-180,180].
+    data_tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_be_between:
+        arguments:
+          min_value: -180
+          max_value: 180
+  - name: is_fraud
+    description: 'Целевая метка UInt8: 0 или 1.'
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - 0
+          - 1

@@ -1,0 +1,408 @@
+version: 2
+unit_tests:
+- name: staging_normalization_amount_boundaries_and_iso_week
+  description: staging normalization amount boundaries and iso week
+  model: stg_transactions
+  given:
+  - input: source('raw', 'transactions')
+    format: dict
+    rows:
+    - transaction_time: '2020-01-05 23:59:00'
+      merch: ' shop '
+      cat_id: ' SHOPPING_NET '
+      amount: 0
+      name_1: ' Jane '
+      name_2: ' DOE '
+      gender: ' f '
+      us_state: ' ca '
+      lat: 34.0
+      lon: -118.0
+      merchant_lat: 35.0
+      merchant_lon: -117.0
+      target: 0
+    - transaction_time: '2020-01-05 23:59:00'
+      merch: ' shop '
+      cat_id: ' SHOPPING_NET '
+      amount: 1.15
+      name_1: ' Jane '
+      name_2: ' DOE '
+      gender: ' f '
+      us_state: ' ca '
+      lat: 34.0
+      lon: -118.0
+      merchant_lat: 35.0
+      merchant_lon: -117.0
+      target: 0
+    - transaction_time: '2020-01-05 23:59:00'
+      merch: ' shop '
+      cat_id: ' SHOPPING_NET '
+      amount: 99.99
+      name_1: ' Jane '
+      name_2: ' DOE '
+      gender: ' f '
+      us_state: ' ca '
+      lat: 34.0
+      lon: -118.0
+      merchant_lat: 35.0
+      merchant_lon: -117.0
+      target: 0
+    - transaction_time: '2020-01-05 23:59:00'
+      merch: ' shop '
+      cat_id: ' SHOPPING_NET '
+      amount: 100
+      name_1: ' Jane '
+      name_2: ' DOE '
+      gender: ' f '
+      us_state: ' ca '
+      lat: 34.0
+      lon: -118.0
+      merchant_lat: 35.0
+      merchant_lon: -117.0
+      target: 0
+    - transaction_time: '2020-01-05 23:59:00'
+      merch: ' shop '
+      cat_id: ' SHOPPING_NET '
+      amount: 999.99
+      name_1: ' Jane '
+      name_2: ' DOE '
+      gender: ' f '
+      us_state: ' ca '
+      lat: 34.0
+      lon: -118.0
+      merchant_lat: 35.0
+      merchant_lon: -117.0
+      target: 0
+    - transaction_time: '2020-01-05 23:59:00'
+      merch: ' shop '
+      cat_id: ' SHOPPING_NET '
+      amount: 1000
+      name_1: ' Jane '
+      name_2: ' DOE '
+      gender: ' f '
+      us_state: ' ca '
+      lat: 34.0
+      lon: -118.0
+      merchant_lat: 35.0
+      merchant_lon: -117.0
+      target: 0
+    - transaction_time: '2020-01-05 23:59:00'
+      merch: ' shop '
+      cat_id: ' SHOPPING_NET '
+      amount: 1000.01
+      name_1: ' Jane '
+      name_2: ' DOE '
+      gender: ' f '
+      us_state: ' ca '
+      lat: 34.0
+      lon: -118.0
+      merchant_lat: 35.0
+      merchant_lon: -117.0
+      target: 0
+    - transaction_time: '2020-01-06 00:00:00'
+      merch: ' shop '
+      cat_id: ' SHOPPING_NET '
+      amount: 15
+      name_1: ' Jane '
+      name_2: ' DOE '
+      gender: ' f '
+      us_state: ' ca '
+      lat: 34.0
+      lon: -118.0
+      merchant_lat: 35.0
+      merchant_lon: -117.0
+      target: 1
+  expect:
+    rows:
+    - merchant: shop
+      category: shopping_net
+      gender: F
+      us_state: CA
+      amount: '0'
+      amount_bucket: SMALL
+      day_of_week: 7
+      transaction_hour: 23
+      is_fraud: 0
+    - merchant: shop
+      category: shopping_net
+      gender: F
+      us_state: CA
+      amount: '1.15'
+      amount_bucket: SMALL
+      day_of_week: 7
+      transaction_hour: 23
+      is_fraud: 0
+    - merchant: shop
+      category: shopping_net
+      gender: F
+      us_state: CA
+      amount: '99.99'
+      amount_bucket: SMALL
+      day_of_week: 7
+      transaction_hour: 23
+      is_fraud: 0
+    - merchant: shop
+      category: shopping_net
+      gender: F
+      us_state: CA
+      amount: '100'
+      amount_bucket: MEDIUM
+      day_of_week: 7
+      transaction_hour: 23
+      is_fraud: 0
+    - merchant: shop
+      category: shopping_net
+      gender: F
+      us_state: CA
+      amount: '999.99'
+      amount_bucket: MEDIUM
+      day_of_week: 7
+      transaction_hour: 23
+      is_fraud: 0
+    - merchant: shop
+      category: shopping_net
+      gender: F
+      us_state: CA
+      amount: '1000'
+      amount_bucket: LARGE
+      day_of_week: 7
+      transaction_hour: 23
+      is_fraud: 0
+    - merchant: shop
+      category: shopping_net
+      gender: F
+      us_state: CA
+      amount: '1000.01'
+      amount_bucket: LARGE
+      day_of_week: 7
+      transaction_hour: 23
+      is_fraud: 0
+    - merchant: shop
+      category: shopping_net
+      gender: F
+      us_state: CA
+      amount: '15'
+      amount_bucket: SMALL
+      day_of_week: 1
+      transaction_hour: 0
+      is_fraud: 1
+- name: daily_aggregation_and_exact_p95
+  description: daily aggregation and exact p95
+  model: mart_daily_state_metrics
+  given:
+  - input: ref('stg_transactions')
+    format: dict
+    rows:
+    - transaction_date: '2020-01-01'
+      us_state: CA
+      amount: 100
+      amount_bucket: MEDIUM
+    - transaction_date: '2020-01-01'
+      us_state: CA
+      amount: 1000
+      amount_bucket: LARGE
+    - transaction_date: '2020-01-02'
+      us_state: CA
+      amount: 1
+      amount_bucket: SMALL
+    - transaction_date: '2020-01-01'
+      us_state: NY
+      amount: 50
+      amount_bucket: SMALL
+  expect:
+    rows:
+    - transaction_date: '2020-01-01'
+      us_state: CA
+      transaction_count: 2
+      total_amount: 1100
+      average_amount: 550
+      p95_amount: 1000
+      large_transaction_count: 1
+      large_transaction_share: 50
+    - transaction_date: '2020-01-02'
+      us_state: CA
+      transaction_count: 1
+      total_amount: 1
+      average_amount: 1
+      p95_amount: 1
+      large_transaction_count: 0
+      large_transaction_share: 0
+    - transaction_date: '2020-01-01'
+      us_state: NY
+      transaction_count: 1
+      total_amount: 50
+      average_amount: 50
+      p95_amount: 50
+      large_transaction_count: 0
+      large_transaction_share: 0
+- name: category_fraud_rate_uses_counts_not_amounts
+  description: category fraud rate uses counts not amounts
+  model: mart_fraud_by_category
+  given:
+  - input: ref('stg_transactions')
+    format: dict
+    rows:
+    - category: a
+      amount: 900
+      is_fraud: 1
+    - category: a
+      amount: 100
+      is_fraud: 0
+    - category: b
+      amount: 10
+      is_fraud: 0
+  expect:
+    rows:
+    - category: a
+      transaction_count: 2
+      fraud_count: 1
+      fraud_rate: 50
+      total_amount: 1000
+      fraud_amount: 900
+    - category: b
+      transaction_count: 1
+      fraud_count: 0
+      fraud_rate: 0
+      total_amount: 10
+      fraud_amount: 0
+- name: state_distinct_clients_merchants_and_dc
+  description: state distinct clients merchants and dc
+  model: mart_fraud_by_state
+  given:
+  - input: ref('stg_transactions')
+    format: dict
+    rows:
+    - us_state: DC
+      customer_id: c1
+      merchant: m1
+      amount: 10
+      is_fraud: 1
+    - us_state: DC
+      customer_id: c1
+      merchant: m2
+      amount: 20
+      is_fraud: 0
+  - input: ref('states')
+    rows:
+    - us_state: DC
+      state_name: District of Columbia
+  expect:
+    rows:
+    - us_state: DC
+      state_name: District of Columbia
+      transaction_count: 2
+      fraud_count: 1
+      fraud_rate: 50
+      unique_customers: 1
+      unique_merchants: 2
+      total_amount: 30
+      fraud_amount: 10
+- name: customer_risk_exact_thresholds_and_below
+  description: customer risk exact thresholds and below
+  model: mart_customer_risk_profile
+  given:
+  - input: ref('stg_transactions')
+    format: sql
+    rows: "select\n    multiIf(number < 20, 'high', number < 120, 'medium', 'low') as customer_id,\n    toDateTime('2020-01-01\
+      \ 10:00:00') as transaction_time,\n    toUInt8(number in (0, 20, 120)) as is_fraud,\n    toDecimal64(10, 2)\
+      \ as amount,\n    'shop' as merchant\nfrom numbers(221)"
+  expect:
+    rows:
+    - customer_id: high
+      transaction_count: 20
+      fraud_count: 1
+      risk_level: HIGH
+      average_amount: 10
+      active_days: 1
+    - customer_id: medium
+      transaction_count: 100
+      fraud_count: 1
+      risk_level: MEDIUM
+      average_amount: 10
+      active_days: 1
+    - customer_id: low
+      transaction_count: 101
+      fraud_count: 1
+      risk_level: LOW
+      average_amount: 10
+      active_days: 1
+- name: hourly_baseline_is_weighted
+  description: hourly baseline is weighted
+  model: mart_hourly_fraud_pattern
+  given:
+  - input: ref('stg_transactions')
+    format: dict
+    rows:
+    - day_of_week: 1
+      transaction_hour: 0
+      amount: 10
+      is_fraud: 1
+    - day_of_week: 1
+      transaction_hour: 1
+      amount: 10
+      is_fraud: 0
+    - day_of_week: 1
+      transaction_hour: 1
+      amount: 10
+      is_fraud: 0
+    - day_of_week: 1
+      transaction_hour: 1
+      amount: 10
+      is_fraud: 0
+  expect:
+    rows:
+    - day_of_week: 1
+      transaction_hour: 0
+      transaction_count: 1
+      fraud_rate: 100
+      overall_fraud_rate: 25
+      risk_lift: 4
+      is_high_risk_window: 1
+    - day_of_week: 1
+      transaction_hour: 1
+      transaction_count: 3
+      fraud_rate: 0
+      overall_fraud_rate: 25
+      risk_lift: 0
+      is_high_risk_window: 0
+- name: hourly_zero_fraud_has_null_lift
+  description: hourly zero fraud has null lift
+  model: mart_hourly_fraud_pattern
+  given:
+  - input: ref('stg_transactions')
+    format: dict
+    rows:
+    - day_of_week: 7
+      transaction_hour: 23
+      amount: 10
+      is_fraud: 0
+  expect:
+    rows:
+    - day_of_week: 7
+      transaction_hour: 23
+      fraud_rate: 0
+      overall_fraud_rate: 0
+      risk_lift: null
+      is_high_risk_window: 0
+- name: merchant_threshold_and_minimum_sample
+  description: merchant threshold and minimum sample
+  model: mart_merchant_analytics
+  given:
+  - input: ref('stg_transactions')
+    format: sql
+    rows: "select\n    multiIf(number < 100, 'at_threshold', number < 199, 'too_small', 'below_rate') as merchant,\n\
+      \    toUInt8(number < 5 or number between 100 and 109 or number between 199 and 202) as is_fraud,\n    toDecimal64(10,\
+      \ 2) as amount,\n    'client' as customer_id,\n    'CA' as us_state\nfrom numbers(299)"
+  expect:
+    rows:
+    - merchant: at_threshold
+      transaction_count: 100
+      fraud_count: 5
+      is_suspicious: 1
+    - merchant: too_small
+      transaction_count: 99
+      fraud_count: 10
+      is_suspicious: 0
+    - merchant: below_rate
+      transaction_count: 100
+      fraud_count: 4
+      is_suspicious: 0

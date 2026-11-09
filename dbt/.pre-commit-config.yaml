@@ -1,0 +1,15 @@
+repos:
+- repo: local
+  hooks:
+  - id: sqlfluff-lint
+    name: sqlfluff lint (ClickHouse + dbt)
+    entry: bash -c 'if [ -f hw04_dbt/dbt/dbt_project.yml ]; then cd hw04_dbt/dbt; elif [ -f dbt/dbt_project.yml ]; then cd dbt; fi; exec make lint'
+    language: system
+    pass_filenames: false
+    files: (^|/)(models|macros|tests)/.*\.sql$
+  - id: dbt-parse
+    name: dbt parse
+    entry: bash -c 'if [ -f hw04_dbt/dbt/dbt_project.yml ]; then cd hw04_dbt/dbt; elif [ -f dbt/dbt_project.yml ]; then cd dbt; fi; exec make parse'
+    language: system
+    pass_filenames: false
+    files: \.(sql|ya?ml)$

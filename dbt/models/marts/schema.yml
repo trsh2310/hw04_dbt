@@ -1,0 +1,322 @@
+version: 2
+models:
+- name: mart_daily_state_metrics
+  description: "Метрики за день по каждому штату."
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - transaction_date
+        - us_state
+  columns:
+  - name: transaction_date
+    description: Календарная дата исходного timestamp, трактуемого как UTC.
+    data_tests:
+    - not_null
+  - name: us_state
+    description: Код штата/округа в верхнем регистре. Справочник включает 50 штатов и DC.
+    data_tests:
+    - not_null
+  - name: transaction_count
+    description: Количество транзакций в группе.
+    data_tests:
+    - not_null
+  - name: total_amount
+    description: Общий оборот в USD, точная сумма Decimal.
+    data_tests:
+    - not_null
+  - name: average_amount
+    description: Средняя сумма всех транзакций в USD.
+    data_tests:
+    - not_null
+  - name: p95_amount
+    description: 'Точный 95-й перцентиль суммы: ClickHouse quantileExact(0.95), без интерполяции.'
+    data_tests:
+    - not_null
+  - name: large_transaction_count
+    description: Число транзакций сегмента LARGE.
+    data_tests:
+    - not_null
+  - name: large_transaction_share
+    description: Доля LARGE в процентах [0,100].
+    data_tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_be_between:
+        arguments:
+          min_value: 0
+          max_value: 100
+- name: mart_fraud_by_category
+  description: "Метрики фрода по категориям."
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - category
+  columns:
+  - name: category
+    description: Категория в нижнем регистре без пробелов по краям.
+    data_tests:
+    - not_null
+    - unique
+  - name: transaction_count
+    description: Количество транзакций в группе.
+    data_tests:
+    - not_null
+  - name: fraud_count
+    description: Количество транзакций с is_fraud=1.
+    data_tests:
+    - not_null
+  - name: fraud_rate
+    description: "100 * fraud_count / transaction_count, проценты [0,100]."
+    data_tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_be_between:
+        arguments:
+          min_value: 0
+          max_value: 100
+  - name: total_amount
+    description: Общий оборот в USD, точная сумма Decimal.
+    data_tests:
+    - not_null
+  - name: fraud_amount
+    description: Сумма транзакций с is_fraud=1 в USD.
+    data_tests:
+    - not_null
+  - name: average_amount
+    description: Средняя сумма всех транзакций в USD.
+    data_tests:
+    - not_null
+- name: mart_fraud_by_state
+  description: "Метрики фрода по штатам и DC."
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - us_state
+  columns:
+  - name: us_state
+    description: Код штата/округа в верхнем регистре. Справочник включает 50 штатов и DC.
+    data_tests:
+    - not_null
+    - unique
+  - name: state_name
+    description: Название штата или District of Columbia из seed states.
+    data_tests:
+    - not_null
+  - name: transaction_count
+    description: Количество транзакций в группе.
+    data_tests:
+    - not_null
+  - name: fraud_count
+    description: Количество транзакций с is_fraud=1.
+    data_tests:
+    - not_null
+  - name: fraud_rate
+    description: "100 * fraud_count / transaction_count, проценты [0,100]."
+    data_tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_be_between:
+        arguments:
+          min_value: 0
+          max_value: 100
+  - name: unique_customers
+    description: Точное число уникальных прокси-ключей клиента.
+    data_tests:
+    - not_null
+  - name: unique_merchants
+    description: Точное число уникальных мерчантов.
+    data_tests:
+    - not_null
+  - name: total_amount
+    description: Общий оборот в USD, точная сумма Decimal.
+    data_tests:
+    - not_null
+  - name: fraud_amount
+    description: Сумма транзакций с is_fraud=1 в USD.
+    data_tests:
+    - not_null
+- name: mart_customer_risk_profile
+  description: "История и риск клиента по всей выборке. Для прогнозирования нужны данные только до даты прогноза."
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - customer_id
+  columns:
+  - name: customer_id
+    description: "MD5 имени, фамилии, пола и координат. Исходного ID клиента нет, возможны совпадения."
+    data_tests:
+    - not_null
+    - unique
+  - name: first_transaction_at
+    description: Первая транзакция клиента в исходной выборке.
+    data_tests:
+    - not_null
+  - name: last_transaction_at
+    description: Последняя транзакция клиента в исходной выборке.
+    data_tests:
+    - not_null
+  - name: transaction_count
+    description: Количество транзакций в группе.
+    data_tests:
+    - not_null
+  - name: fraud_count
+    description: Количество транзакций с is_fraud=1.
+    data_tests:
+    - not_null
+  - name: fraud_rate
+    description: "100 * fraud_count / transaction_count, проценты [0,100]."
+    data_tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_be_between:
+        arguments:
+          min_value: 0
+          max_value: 100
+  - name: total_amount
+    description: Общий оборот в USD, точная сумма Decimal.
+    data_tests:
+    - not_null
+  - name: fraud_amount
+    description: Сумма транзакций с is_fraud=1 в USD.
+    data_tests:
+    - not_null
+  - name: average_amount
+    description: Средняя сумма всех транзакций в USD.
+    data_tests:
+    - not_null
+  - name: unique_merchants
+    description: Точное число уникальных мерчантов.
+    data_tests:
+    - not_null
+  - name: active_days
+    description: Число дней, в которые у клиента были транзакции.
+    data_tests:
+    - not_null
+  - name: risk_level
+    description: 'Исторический риск: HIGH при fraud_rate>=5%, MEDIUM при >=1%, иначе LOW; не прогнозная модель.'
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - LOW
+          - MEDIUM
+          - HIGH
+- name: mart_hourly_fraud_pattern
+  description: "Метрики фрода по дню недели и часу. Общая доля учитывает количество транзакций."
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - day_of_week
+        - transaction_hour
+  columns:
+  - name: day_of_week
+    description: 'ISO-день недели: понедельник=1, воскресенье=7; макрос dbt_date.'
+    data_tests:
+    - not_null
+  - name: transaction_hour
+    description: "Час исходного timestamp: 0-23, без пересчёта в часовой пояс штата."
+    data_tests:
+    - not_null
+  - name: transaction_count
+    description: Количество транзакций в группе.
+    data_tests:
+    - not_null
+  - name: fraud_count
+    description: Количество транзакций с is_fraud=1.
+    data_tests:
+    - not_null
+  - name: fraud_rate
+    description: "100 * fraud_count / transaction_count, проценты [0,100]."
+    data_tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_be_between:
+        arguments:
+          min_value: 0
+          max_value: 100
+  - name: total_amount
+    description: Общий оборот в USD, точная сумма Decimal.
+    data_tests:
+    - not_null
+  - name: fraud_amount
+    description: Сумма транзакций с is_fraud=1 в USD.
+    data_tests:
+    - not_null
+  - name: overall_fraud_rate
+    description: Взвешенная доля фрода во всей выборке, проценты.
+    data_tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_be_between:
+        arguments:
+          min_value: 0
+          max_value: 100
+  - name: risk_lift
+    description: fraud_rate / overall_fraud_rate; NULL, если во всей выборке нет фрода.
+  - name: is_high_risk_window
+    description: 1, если fraud_rate окна выше общей доли фрода, иначе 0.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - 0
+          - 1
+- name: mart_merchant_analytics
+  description: "Оборот и фрод по мерчантам."
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - merchant
+  columns:
+  - name: merchant
+    description: Мерчант без пробелов по краям; регистр сохранён.
+    data_tests:
+    - not_null
+    - unique
+  - name: transaction_count
+    description: Количество транзакций в группе.
+    data_tests:
+    - not_null
+  - name: fraud_count
+    description: Количество транзакций с is_fraud=1.
+    data_tests:
+    - not_null
+  - name: fraud_rate
+    description: "100 * fraud_count / transaction_count, проценты [0,100]."
+    data_tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_be_between:
+        arguments:
+          min_value: 0
+          max_value: 100
+  - name: total_amount
+    description: Общий оборот в USD, точная сумма Decimal.
+    data_tests:
+    - not_null
+  - name: fraud_amount
+    description: Сумма транзакций с is_fraud=1 в USD.
+    data_tests:
+    - not_null
+  - name: average_amount
+    description: Средняя сумма всех транзакций в USD.
+    data_tests:
+    - not_null
+  - name: unique_customers
+    description: Точное число уникальных прокси-ключей клиента.
+    data_tests:
+    - not_null
+  - name: states_count
+    description: Число различных штатов клиентов мерчанта.
+    data_tests:
+    - not_null
+  - name: is_suspicious
+    description: 1 при fraud_rate>=5% и >=100 транзакций; эвристика, не доказательство мошенничества.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - 0
+          - 1

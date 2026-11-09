@@ -1,0 +1,70 @@
+version: 2
+sources:
+- name: raw
+  schema: transactions_db
+  description: "train.csv из домашней работы по ClickHouse, teta-ml-1-2025."
+  tables:
+  - name: transactions
+    description: "Исходные транзакции с разметкой фрода."
+    data_tests:
+    - dbt_expectations.expect_table_row_count_to_be_between:
+        arguments:
+          min_value: 1
+    columns:
+    - name: transaction_time
+      description: Время транзакции без исходного часового пояса; обрабатывается как UTC без сдвига.
+      data_tests:
+      - not_null
+    - name: merch
+      description: Наименование мерчанта.
+      data_tests:
+      - not_null
+    - name: cat_id
+      description: Одна из 14 категорий покупки.
+      data_tests:
+      - not_null
+    - name: amount
+      description: Сумма транзакции в USD.
+      data_tests:
+      - not_null
+    - name: name_1
+      description: Имя клиента.
+      data_tests:
+      - not_null
+    - name: name_2
+      description: Фамилия клиента.
+      data_tests:
+      - not_null
+    - name: gender
+      description: 'Пол клиента: M/F.'
+      data_tests:
+      - not_null
+    - name: us_state
+      description: Код штата США или DC.
+      data_tests:
+      - not_null
+    - name: lat
+      description: Широта клиента.
+      data_tests:
+      - not_null
+    - name: lon
+      description: Долгота клиента.
+      data_tests:
+      - not_null
+    - name: merchant_lat
+      description: Широта мерчанта.
+      data_tests:
+      - not_null
+    - name: merchant_lon
+      description: Долгота мерчанта.
+      data_tests:
+      - not_null
+    - name: target
+      description: "Разметка мошенничества: 1 - фрод, 0 - обычная транзакция."
+      data_tests:
+      - not_null
+      - accepted_values:
+          arguments:
+            values:
+            - 0
+            - 1
