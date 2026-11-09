@@ -1,3 +1,10 @@
 .venv/
-tmp/
+__pycache__/
+*.pyc
+.env
+logs/
+target/
+dbt_packages/
+.pre-commit-cache/
 .DS_Store
+.user.yml

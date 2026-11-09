@@ -33,7 +33,7 @@
 
 ## Запуск
 
-Нужны Python 3.11 или новее, Docker и Make. В папке hw04_dbt/dbt выполнить:
+Нужны Python 3.11 или новее, Docker и Make. Из корня репозитория выполнить:
 
 ```bash
 make install
